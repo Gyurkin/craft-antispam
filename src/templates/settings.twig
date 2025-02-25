@@ -3,140 +3,171 @@
 
 {# Variables #}
 {% set selectedSubnavItem = 'settings' %}
-{% set fullPageForm = false %}
+{% set fullPageForm = true %}
 
-{% block head %}
-    {{ parent() }}
+{% set crumbs = [
+    { label: "Antispam"|t('antispam'), url: url('antispam/settings')},
+    { label: "Settings"|t('antispam'), url: url('antispam/settings')}
+] %}
+
+{% block actionButton %}
+    <div class="buttons">
+        <button type="submit" class="btn submit">
+            {{ "Save"|t('antispam') }}
+        </button>
+    </div>
 {% endblock %}
 
 {% block content %}
-    {{ parent() }}
+    {{ actionInput('antispam/settings/save') }}
+    {{ redirectInput('antispam/settings/save') }}
 
-    <form method="post" action="{{ url('antispam/settings/save') }}">
-        {{ csrfInput() }}
-
-        <label>Allowed Countries (comma-separated):</label>
-
-        {{ forms.selectize({
-            label: 'Allowed Countries',
-            id: 'allowedCountries',
-            name: 'allowedCountries',
-            values: settings.allowedCountries,
-            multi: true,
-            options: countries
-        }) }}
-
-        {{ forms.lightswitchField({
-            label: 'Enable Logging'|t('yui'),
-            instructions: '',
-            id: 'enableLogging',
-            name: 'enableLogging',
-            on: settings.enableLogging,
-            errors: settings.getErrors('enableLogging'),
-            small: true,
-        }) }}
-
-        <hr>
-
-        {{ forms.lightswitchField({
-            label: 'Enable Phone validation'|t('yui'),
-            instructions: '',
-            id: 'enablePhoneValidation',
-            name: 'enablePhoneValidation',
-            on: settings.enablePhoneValidation,
-            errors: settings.getErrors('enablePhoneValidation'),
-            small: true,
-            toggle: '.phone-options'
-        }) }}
-
-        <div class="phone-options hidden">
-            {{ forms.textField({
-                first: false,
-                label: 'Phone field handle in the form'|t('yui'),
-                instructions: ''|t('yui'),
-                id: 'phoneFieldHandle',
-                name: 'phoneFieldHandle',
-                value: settings.phoneFieldHandle,
-                errors: settings.getErrors('phoneFieldHandle'),
-                suggestEnvVars: false,
-            }) }}
-
-            {{ forms.editableTable({
-                label: 'Phone Number Validation Patterns',
-                id: 'phoneRegexPatterns',
-                name: 'phoneRegexPatterns',
-                cols: {
-                    country: { heading: "Country Code", type: "singleline" },
-                    regex: { heading: "Regex Pattern", type: "singleline" },
-                },
-                rows: phoneRegexPatterns,
-                addRowLabel: "Add New Country Rule"
+    <div id="allowedCountries-field" class="field" data-attribute="allowedCountries">
+        <div class="heading">
+            <label id="allowedCountries-label" for="allowedCountries">
+                {{ 'Allowed Countries'|t('antispam') }}
+            </label>
+        </div>
+        <div id="allowedCountries-instructions" class="instructions">
+            <p>{{ 'Select the countries from which users are permitted. Hold Ctrl (or Command on Mac) to choose multiple options.'|t('antispam') }}</p>
+        </div>
+        <div class="input ltr">
+            {{ forms.selectize({
+                label: 'Allowed Countries'|t('antispam'),
+                id: 'allowedCountries',
+                name: 'allowedCountries',
+                values: settings.allowedCountries,
+                multi: true,
+                options: countries
             }) }}
         </div>
+    </div>
 
-        <hr>
+    <hr>
 
-        {{ forms.lightswitchField({
-            label: 'Enable Honeypot validation'|t('yui'),
-            instructions: '',
-            id: 'enableHoneypot',
-            name: 'enableHoneypot',
-            on: settings.enableHoneypot,
-            errors: settings.getErrors('enableHoneypot'),
-            small: true,
-            toggle: '.honeypot-options'
-        }) }}
+    {{ forms.lightswitchField({
+        label: 'Enable Logging'|t('antispam'),
+        instructions: 'Toggle to enable logging of system events and administrative actions.'|t('antispam'),
+        id: 'enableLogging',
+        name: 'enableLogging',
+        on: settings.enableLogging,
+        errors: settings.getErrors('enableLogging'),
+        small: true,
+    }) }}
 
-        <div class="honeypot-options hidden">
-            {{ forms.textField({
-                first: false,
-                label: 'Honeypot field handle in the form'|t('yui'),
-                instructions: ''|t('yui'),
-                id: 'honeypotFieldHandle',
-                name: 'honeypotFieldHandle',
-                value: settings.honeypotFieldHandle,
-                errors: settings.getErrors('honeypotFieldHandle'),
-                suggestEnvVars: false,
-            }) }}
-        </div>
+    <hr>
 
-        <hr>
+    {{ forms.lightswitchField({
+        label: 'Enable Phone Validation'|t('antispam'),
+        instructions: 'Toggle to validate phone numbers in submitted forms. When enabled, additional phone validation settings will appear.'|t('antispam'),
+        id: 'enablePhoneValidation',
+        name: 'enablePhoneValidation',
+        on: settings.enablePhoneValidation,
+        errors: settings.getErrors('enablePhoneValidation'),
+        small: true,
+        toggle: '.phone-options'
+    }) }}
 
-        {{ forms.lightswitchField({
-            label: 'Enable IP Blocking'|t('yui'),
-            instructions: '',
-            id: 'enableIpBlocking',
-            name: 'enableIpBlocking',
-            on: settings.enableIpBlocking,
-            errors: settings.getErrors('enableIpBlocking'),
-            small: true,
-        }) }}
-
-        <hr>
-
-        {{ forms.lightswitchField({
-            label: 'Send Weekly Spam Report'|t('yui'),
-            instructions: '',
-            id: 'sendWeeklyReport',
-            name: 'sendWeeklyReport',
-            on: settings.sendWeeklyReport,
-            errors: settings.getErrors('sendWeeklyReport'),
-            small: true,
-        }) }}
-
-        <hr>
-
+    <div class="phone-options hidden">
         {{ forms.textField({
             first: false,
-            label: 'Minimum Submission Time (seconds)'|t('yui'),
-            instructions: ''|t('yui'),
-            id: 'minSubmissionTime',
-            name: 'minSubmissionTime',
-            value: settings.minSubmissionTime,
-            errors: settings.getErrors('minSubmissionTime'),
-            suggestEnvVars: true,
+            label: 'Phone Field Identifier'|t('antispam'),
+            instructions: 'Specify the field name used for capturing phone numbers from form submissions.'|t('antispam'),
+            id: 'phoneFieldHandle',
+            name: 'phoneFieldHandle',
+            value: settings.phoneFieldHandle,
+            errors: settings.getErrors('phoneFieldHandle'),
+            suggestEnvVars: false,
         }) }}
 
-        <button type="submit" class="btn primary submit">Save</button>
-    </form>
+        {{ forms.editableTable({
+            label: 'Phone Number Validation Patterns'|t('antispam'),
+            instructions: 'Define regular expression patterns to validate phone numbers based on country codes. Use "Add New Country Rule" to add more rules.'|t('antispam'),
+            id: 'phoneRegexPatterns',
+            name: 'phoneRegexPatterns',
+            cols: {
+                country: { heading: "Country Code"|t('antispam'), type: "singleline" },
+                regex: { heading: "Regex Pattern"|t('antispam'), type: "singleline" },
+            },
+            rows: phoneRegexPatterns,
+            addRowLabel: "Add New Country Rule"|t('antispam')
+        }) }}
+    </div>
+
+    <hr>
+
+    {{ forms.lightswitchField({
+        label: 'Enable Honeypot Validation'|t('antispam'),
+        instructions: 'Toggle to activate honeypot validation, which helps prevent spam by detecting automated submissions.'|t('antispam'),
+        id: 'enableHoneypot',
+        name: 'enableHoneypot',
+        on: settings.enableHoneypot,
+        errors: settings.getErrors('enableHoneypot'),
+        small: true,
+        toggle: '.honeypot-options'
+    }) }}
+
+    <div class="honeypot-options hidden">
+        {{ forms.textField({
+            first: false,
+            label: 'Honeypot Field Identifier'|t('antispam'),
+            instructions: 'Enter the field name of the hidden honeypot used to trap bots.'|t('antispam'),
+            id: 'honeypotFieldHandle',
+            name: 'honeypotFieldHandle',
+            value: settings.honeypotFieldHandle,
+            errors: settings.getErrors('honeypotFieldHandle'),
+            suggestEnvVars: false,
+        }) }}
+    </div>
+
+    <hr>
+
+    {{ forms.lightswitchField({
+        label: 'Enable IP Blocking'|t('antispam'),
+        instructions: 'Toggle to enable IP blocking for suspicious or blacklisted addresses.'|t('antispam'),
+        id: 'enableIpBlocking',
+        name: 'enableIpBlocking',
+        on: settings.enableIpBlocking,
+        errors: settings.getErrors('enableIpBlocking'),
+        small: true,
+    }) }}
+
+    <hr>
+
+    {{ forms.lightswitchField({
+        label: 'Send Weekly Spam Report'|t('antispam'),
+        instructions: 'Toggle to send a weekly report of spam activity to specified email addresses.'|t('antispam'),
+        id: 'sendWeeklyReport',
+        name: 'sendWeeklyReport',
+        on: settings.sendWeeklyReport,
+        errors: settings.getErrors('sendWeeklyReport'),
+        small: true,
+        toggle: '.weekly-options'
+    }) }}
+
+    <div class="weekly-options hidden">
+        {{ forms.textField({
+            first: false,
+            label: 'Weekly Report Email Addresses'|t('antispam'),
+            instructions: 'Enter a comma-separated list of email addresses to receive the weekly spam report.'|t('antispam'),
+            id: 'weeklyReportEmails',
+            name: 'weeklyReportEmails',
+            value: settings.weeklyReportEmails,
+            errors: settings.getErrors('weeklyReportEmails'),
+            suggestEnvVars: true,
+        }) }}
+    </div>
+
+    <hr>
+
+    {{ forms.textField({
+        first: false,
+        label: 'Minimum Submission Time (seconds)'|t('antispam'),
+        instructions: 'Specify the minimum time a user must take to complete the form. This helps prevent rapid, automated submissions.'|t('antispam'),
+        id: 'minSubmissionTime',
+        name: 'minSubmissionTime',
+        value: settings.minSubmissionTime,
+        errors: settings.getErrors('minSubmissionTime'),
+        suggestEnvVars: true,
+    }) }}
 {% endblock %}

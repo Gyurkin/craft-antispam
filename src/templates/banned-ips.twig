@@ -1,43 +1,117 @@
 {% extends "_layouts/cp" %}
+{% import '_includes/forms.twig' as forms %}
+
+{% do view.registerAssetBundle('craft\\web\\assets\\admintable\\AdminTableAsset') -%}
+{% do view.registerTranslations('antispam', [
+    'IP Address',
+    'Reason',
+    'Banned At',
+    'Actions',
+    'Unban',
+]) %}
+
+{% set fullPageForm = false %}
+
+{% set crumbs = [
+    { label: "Antispam"|t('antispam'), url: url('antispam/banned-ips')},
+    { label: "Banned IPs"|t('antispam'), url: url('antispam/banned-ips')}
+] %}
+
+{% block actionButton %}
+
+{% endblock %}
 
 {% block content %}
-    <h1>Banned IPs</h1>
-
     <form method="post" action="{{ url('antispam/banned-ips/ban-ip') }}">
         {{ csrfInput() }}
-        <label>IP Address:</label>
-        <input type="text" name="ip" required>
-        <label>Reason:</label>
-        <input type="text" name="reason">
-        <button class="btn submit">Ban IP</button>
+
+        <style>
+            .tree-column-fields {
+                display: flex;
+            }
+
+            .tree-column-fields .field,
+            .tree-column-fields button {
+                flex: 1;
+                margin: 0;
+            }
+
+            .tree-column-fields button {
+                height: 56px;
+            }
+        </style>
+
+        <div class="tree-column-fields">
+            {{ forms.textField({
+                first: false,
+                label: 'IP Address'|t('antispam'),
+                placeholder: 'IP Address'|t('antispam'),
+                instructions: ''|t('antispam'),
+                id: 'ip',
+                name: 'ip',
+                required: true
+            }) }}
+
+            {{ forms.textField({
+                first: false,
+                label: 'Reason'|t('antispam'),
+                placeholder: 'Reason'|t('antispam'),
+                instructions: ''|t('antispam'),
+                id: 'reason',
+                name: 'reason',
+                required: false,
+                maxLength: 255
+            }) }}
+
+            <button class="btn submit" type="submit">
+                {{ 'Ban IP'|t('antispam') }}
+            </button>
+        </div>
     </form>
 
     <hr>
 
-    <table class="data fullwidth">
-        <thead>
-        <tr>
-            <th>IP Address</th>
-            <th>Reason</th>
-            <th>Banned At</th>
-            <th>Actions</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for ip in bannedIps %}
-            <tr>
-                <td>{{ ip.ip_address }}</td>
-                <td>{{ ip.reason }}</td>
-                <td>{{ ip.banned_at|date("Y-m-d H:i:s") }}</td>
-                <td>
-                    <form method="post" action="{{ url('antispam/banned-ips/unban-ip') }}">
-                        {{ csrfInput() }}
-                        <input type="hidden" name="ip" value="{{ ip.ip_address }}">
-                        <button class="btn small">Unban</button>
-                    </form>
-                </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <div id="data-vue-admin-table"></div>
+
+    {% set tableData = [] %}
+    {% for row in bannedIps %}
+        {% set tableData = tableData|merge([{
+            id: row.id,
+            ip_address: row.ip_address,
+            reason: row.reason,
+            banned_at: row.banned_at|date("Y-m-d H:i:s"),
+        }]) %}
+    {% endfor %}
+
+    {% js %}
+        var columns = [
+            { name: 'ip_address', title: Craft.t('antispam', 'IP Address') },
+            { name: 'reason', title: Craft.t('antispam', 'Reason') },
+            { name: 'banned_at', title: Craft.t('antispam', 'Banned At') },
+        ];
+
+        var actions = [
+            {
+                label: Craft.t('antispam', 'Actions'),
+                actions: [
+                    {
+                        label: Craft.t('antispam', 'Unban'),
+                        action: 'antispam/logs/unban-ip',
+                        param: 'status',
+                        value: 'enabled',
+                        status: 'enabled'
+                    },
+                ]
+            }
+        ];
+
+        new Craft.VueAdminTable({
+            actions: actions,
+            checkboxes: true,
+            columns: columns,
+            container: '#data-vue-admin-table',
+            padded: false,
+            tableData: {{ tableData|json_encode|raw }}
+        });
+    {% endjs %}
 {% endblock %}

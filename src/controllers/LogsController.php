@@ -7,6 +7,7 @@ use craft\web\Controller;
 use craft\db\Query;
 use yii\web\Response;
 use craft\helpers\Db;
+use \yii\web\BadRequestHttpException;
 
 /**
  * Class LogsController
@@ -33,21 +34,25 @@ class LogsController extends Controller
 
         return $this->renderTemplate('antispam/logs', [
             'logs' => $logs,
-            'title' => 'Logs'
+            'title' => Craft::t('antispam', 'Logs')
         ]);
     }
 
     /**
-     * @return mixed
+     * @return Response|null
      */
-    public function actionClearLogs()
+    public function actionClearLogs(): ?Response
     {
         Craft::$app->getDb()->createCommand()->delete('{{%antispam_log}}')->execute();
-        Craft::$app->getSession()->setNotice('Spam logs cleared.');
+        Craft::$app->getSession()->setNotice(Craft::t('antispam', 'Spam logs cleared.'));
+
         return $this->redirect('antispam/logs');
     }
 
-    public function actionBannedIps(): Response
+    /**
+     * @return Response|null
+     */
+    public function actionBannedIps(): ?Response
     {
         $bannedIps = (new Query())
             ->from('{{%antispam_banned_ips}}')
@@ -55,20 +60,24 @@ class LogsController extends Controller
             ->all();
 
         return $this->renderTemplate('antispam/banned-ips', [
-            'title' => 'Banned Ips',
+            'title' => Craft::t('antispam', 'Banned Ips'),
             'bannedIps' => $bannedIps,
         ]);
     }
 
-    public function actionBanIp()
+    /**
+     * @return Response|null
+     */
+    public function actionBanIp(): ?Response
     {
         $this->requirePostRequest();
         $request = Craft::$app->getRequest();
         $ip = $request->getBodyParam('ip');
-        $reason = $request->getBodyParam('reason', 'Manually banned');
+        $reason = $request->getBodyParam('reason', Craft::t('antispam', 'Manually banned'));
 
         if (!$ip) {
-            throw new BadRequestHttpException('Invalid IP address.');
+            Craft::$app->getSession()->setError(Craft::t('antispam', 'Invalid IP address.'));
+            return $this->redirect('antispam/banned-ips');
         }
 
         // Insert into banned IPs table
@@ -78,26 +87,35 @@ class LogsController extends Controller
             'banned_at' => Db::prepareDateForDb(new \DateTime()),
         ])->execute();
 
-        Craft::$app->getSession()->setNotice("IP {$ip} banned.");
+        Craft::$app->getSession()->setNotice(Craft::t('antispam', "IP {ip} banned.", ['ip' => $ip]));
         return $this->redirect('antispam/banned-ips');
     }
 
-    public function actionUnbanIp()
+    /**
+     * @return Response|null
+     */
+    public function actionUnbanIp(): ?Response
     {
         $this->requirePostRequest();
-        $request = Craft::$app->getRequest();
-        $ip = $request->getBodyParam('ip');
 
-        if (!$ip) {
-            throw new BadRequestHttpException('Invalid IP address.');
+        $request = Craft::$app->getRequest();
+        $ids = $request->getBodyParam('ids');
+
+        if (empty($ids)) {
+            return $this->redirect('antispam/banned-ips');
         }
 
-        // Remove from banned IPs table
+        // Ensure $ids is an array even if a single ID is provided
+        if (!is_array($ids)) {
+            $ids = [$ids];
+        }
+
+        // Delete banned IP entries by their IDs
         Craft::$app->getDb()->createCommand()
-            ->delete('{{%antispam_banned_ips}}', ['ip_address' => $ip])
+            ->delete('{{%antispam_banned_ips}}', ['id' => $ids])
             ->execute();
 
-        Craft::$app->getSession()->setNotice("IP {$ip} unbanned.");
+        Craft::$app->getSession()->setNotice(Craft::t('antispam', "Selected IP(s) unbanned."));
         return $this->redirect('antispam/banned-ips');
     }
 }

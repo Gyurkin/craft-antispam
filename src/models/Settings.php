@@ -57,6 +57,11 @@ class Settings extends Model
     public bool $enableGeoValidation = true;
 
     /**
+     * @var string|null
+     */
+    public ?string $weeklyReportEmails = null;
+
+    /**
      * @var array|string[]
      */
     public array $phoneRegexPatterns = [

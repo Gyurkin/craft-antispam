@@ -1,29 +1,56 @@
 {% extends "_layouts/cp" %}
 
+{% do view.registerAssetBundle('craft\\web\\assets\\admintable\\AdminTableAsset') -%}
+{% do view.registerTranslations('antispam', [
+    'IP Address',
+    'Reason',
+    'Timestamp',
+]) %}
+
+{% set fullPageForm = true %}
+
+{% set crumbs = [
+    { label: "Antispam"|t('antispam'), url: url('antispam/logs')},
+    { label: "Logs"|t('antispam'), url: url('antispam/logs')}
+] %}
+
+{% block actionButton %}
+    <div class="buttons">
+        <button type="submit" class="btn submit">{{ "Clear Logs"|t('antispam') }}</button>
+    </div>
+{% endblock %}
+
 {% block content %}
-    <h1>Anti-Spam Logs</h1>
+    {{ actionInput('antispam/logs/clear-logs') }}
+    {{ redirectInput('antispam/logs/clear-logs') }}
 
-    <form method="post" action="{{ url('antispam/logs/clear-logs') }}">
-        {{ csrfInput() }}
-        <button class="btn submit">Clear Logs</button>
-    </form>
+    <div id="data-vue-admin-table"></div>
 
-    <table class="data fullwidth">
-        <thead>
-        <tr>
-            <th>IP Address</th>
-            <th>Reason</th>
-            <th>Timestamp</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for log in logs %}
-            <tr>
-                <td>{{ log.ip_address }}</td>
-                <td>{{ log.reason }}</td>
-                <td>{{ log.timestamp|date("Y-m-d H:i:s") }}</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    {% set tableData = [] %}
+    {% for row in logs %}
+        {% set tableData = tableData|merge([{
+            ip_address: row.ip_address,
+            reason: row.reason,
+            timestamp: row.timestamp|date("Y-m-d H:i:s"),
+        }]) %}
+    {% endfor %}
+
+    {% js %}
+        var columns = [
+            { name: 'ip_address', title: Craft.t('antispam', 'IP Address') },
+            { name: 'reason', title: Craft.t('antispam', 'Reason') },
+            { name: 'timestamp', title: Craft.t('antispam', 'Timestamp') },
+        ];
+
+        var actions = [];
+
+        new Craft.VueAdminTable({
+            actions: actions,
+            checkboxes: false,
+            columns: columns,
+            container: '#data-vue-admin-table',
+            padded: false,
+            tableData: {{ tableData|json_encode|raw }}
+        });
+    {% endjs %}
 {% endblock %}

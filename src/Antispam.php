@@ -13,6 +13,7 @@ use modules\antispam\src\jobs\SendSpamReport;
 use craft\web\View;
 use craft\events\RegisterTemplateRootsEvent;
 use modules\antispam\src\models\Settings;
+use craft\i18n\PhpMessageSource;
 
 /**
  * Class Antispam
@@ -43,6 +44,16 @@ class Antispam extends BaseModule
 
         Craft::$app->onInit(function() {
             self::runMigrations();
+
+            // Register the 'antispam' translation category using an alias for the basePath.
+            Craft::$app->i18n->translations['antispam'] = [
+                'class' => PhpMessageSource::class,
+                'sourceLanguage' => 'en-US',
+                'basePath' => '@antispam/translations',
+                'forceTranslation' => true,
+                'allowOverrides' => true,
+            ];
+
             self::registerEventHandlers();
             self::registerControlPanel();
             self::scheduleWeeklyReport();
@@ -95,7 +106,7 @@ class Antispam extends BaseModule
                 if ($settings->enableGeoValidation) {
                     $geoData = self::getGeoLocation($ip);
                     if ($geoData && !in_array(strtoupper($geoData['countryCode']), $allowedCountries)) {
-                        self::logSpam($ip, 'Country not allowed: ' . $geoData['countryCode']);
+                        self::logSpam($ip, Craft::t('antispam', 'Country not allowed: {country}.', ['country' => $geoData['countryCode']]));
                         $event->isSpam = true;
                         $event->handled = true;
                         return;
@@ -107,7 +118,7 @@ class Antispam extends BaseModule
                 if ($settings->enablePhoneValidation && $phoneHandle) {
                     $geoData = self::getGeoLocation($ip);
                     if ($geoData && !self::validatePhone($event->submission->message[$phoneHandle] ?? '', strtoupper($geoData['countryCode']))) {
-                        self::logSpam($ip, 'Invalid phone number: ' . $event->submission->message[$phoneHandle]);
+                        self::logSpam($ip, Craft::t('antispam', 'Invalid phone number: {phone}.', ['phone' => $event->submission->message[$phoneHandle]]));
                         $event->isSpam = true;
                         $event->handled = true;
                         return;
@@ -118,7 +129,7 @@ class Antispam extends BaseModule
                 $honeypotHandle = $settings->honeypotFieldHandle;
                 if ($settings->enableHoneypot && $honeypotHandle) {
                     if (!empty($event->submission->message[$honeypotHandle])) {
-                        self::logSpam($ip, 'Honeypot triggered with value:' . $event->submission->message[$honeypotHandle]);
+                        self::logSpam($ip, Craft::t('antispam', 'Honeypot triggered with value: {honeypot}.', ['honeypot' => $event->submission->message[$honeypotHandle]]));
                         $event->isSpam = true;
                         $event->handled = true;
                         return;
@@ -128,7 +139,7 @@ class Antispam extends BaseModule
                 // 5. Check submission time
                 if ($settings->enableSubmissionTimeCheck) {
                     if (!self::validateSubmissionTime()) {
-                        self::logSpam($ip, 'Form submitted too quickly');
+                        self::logSpam($ip, Craft::t('antispam', 'Form submitted too quickly.'));
                         $event->isSpam = true;
                         $event->handled = true;
                         return;
@@ -241,7 +252,7 @@ class Antispam extends BaseModule
     /**
      * @return bool
      */
-    private static function validateSubmissionTime()
+    private static function validateSubmissionTime(): bool
     {
         $session = Craft::$app->getSession();
         $startTime = $session->get('formStartTime');
@@ -257,6 +268,13 @@ class Antispam extends BaseModule
      */
     private static function logSpam($ip, $reason): void
     {
+        $settings = self::getSettings();
+
+        // Skip if disabled
+        if (!$settings->enableLogging) {
+            return;
+        }
+
         // If IP is already banned, no need to log again
         if (self::isBannedIp($ip)) {
             return;
@@ -307,13 +325,13 @@ class Antispam extends BaseModule
             \craft\web\twig\variables\Cp::EVENT_REGISTER_CP_NAV_ITEMS,
             static function (\craft\events\RegisterCpNavItemsEvent $event) {
                 $event->navItems[] = [
-                    'label' => 'Anti-Spam',
+                    'label' => Craft::t('antispam', 'Anti-Spam'),
                     'url' => 'antispam/logs',
                     'icon' => Craft::getAlias('@antispam/resources/icon.svg'),
                     'subnav' => [
-                        'logs' => ['label' => 'Spam Logs', 'url' => 'antispam/logs'],
-                        'bannedIps' => ['label' => 'Banned IPs', 'url' => 'antispam/banned-ips'],
-                        'settings' => ['label' => 'Settings', 'url' => 'antispam/settings'],
+                        'logs' => ['label' => Craft::t('antispam', 'Spam Logs'), 'url' => 'antispam/logs'],
+                        'bannedIps' => ['label' => Craft::t('antispam', 'Banned IPs'), 'url' => 'antispam/banned-ips'],
+                        'settings' => ['label' => Craft::t('antispam', 'Settings'), 'url' => 'antispam/settings'],
                     ],
                 ];
             }

@@ -6,6 +6,7 @@ use Craft;
 use craft\queue\BaseJob;
 use craft\db\Query;
 use craft\helpers\Db;
+use modules\antispam\src\Antispam;
 
 /**
  * Class SendSpamReport
@@ -20,6 +21,9 @@ class SendSpamReport extends BaseJob
      */
     public function execute($queue): void
     {
+        $settings = Antispam::getSettings();
+        $reportEmails = $settings->weeklyReportEmails ? explode(',', $settings->weeklyReportEmails) : [];
+
         // Count spam attempts in the last 7 days
         $spamCount = (new Query())
             ->from('{{%antispam_log}}')
@@ -36,9 +40,15 @@ class SendSpamReport extends BaseJob
             . "Total spam attempts blocked in the last week: **{$spamCount}**\n\n"
             . "Check the logs in Craft CP → Anti-Spam → Logs.";
 
-        // Send email to admin
+        // Merge admin email and report emails, trim whitespace and remove duplicates
+        $emails = array_unique(array_merge(
+            [$adminEmail],
+            array_map('trim', $reportEmails)
+        ));
+
+        // Send email to all recipients in one go for best performance
         Craft::$app->getMailer()->compose()
-            ->setTo($adminEmail)
+            ->setTo($emails)
             ->setSubject('Weekly Anti-Spam Report')
             ->setTextBody($body)
             ->send();

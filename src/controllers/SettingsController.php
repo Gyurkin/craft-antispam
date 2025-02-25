@@ -81,6 +81,7 @@ class SettingsController extends Controller
             'phoneFieldHandle' => (string) $request->getBodyParam('phoneFieldHandle'),
             'enableHoneypot' => (bool) $request->getBodyParam('enableHoneypot'),
             'honeypotFieldHandle' => (string)$request->getBodyParam('honeypotFieldHandle'),
+            'weeklyReportEmails' => (string)$request->getBodyParam('weeklyReportEmails'),
         ]);
 
         Craft::$app->getProjectConfig()->set('antispam', $settings->toArray());
