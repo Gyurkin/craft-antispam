@@ -76,10 +76,11 @@ You can manually ban an IP via the **Banned IPs** page in the CP or programmatic
 Phone numbers are validated using regex patterns for each country:
 
 ```php
-'SK' => '/^\+421\d{9}$/',
-'CZ' => '/^\+420\d{9}$/',
-'HU' => '/^\+36\d{9}$/',
-'DE' => '/^\+49\d{10,11}$/',
+'SK' => '/^\+421\d{9}$/',       // +421 944345046 (normalized)
+'CZ' => '/^\+420\d{9}$/',       // +420 123456789
+'HU' => '/^\+36\d{9}$/',        // +36 123456789
+'DE' => '/^\+49\d{10,11}$/',    // +49 1234567890
+'AT' => '/^\+43\d{9,10}$/',     // +43 123456789
 ```
 
 ## 📊 Admin Panel Features
