@@ -1,0 +1,29 @@
+{% extends "_layouts/cp" %}
+
+{% block content %}
+    <h1>Anti-Spam Logs</h1>
+
+    <form method="post" action="{{ url('antispam/logs/clear-logs') }}">
+        {{ csrfInput() }}
+        <button class="btn submit">Clear Logs</button>
+    </form>
+
+    <table class="data fullwidth">
+        <thead>
+        <tr>
+            <th>IP Address</th>
+            <th>Reason</th>
+            <th>Timestamp</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for log in logs %}
+            <tr>
+                <td>{{ log.ip_address }}</td>
+                <td>{{ log.reason }}</td>
+                <td>{{ log.timestamp|date("Y-m-d H:i:s") }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

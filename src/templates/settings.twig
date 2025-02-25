@@ -1,0 +1,142 @@
+{% extends "_layouts/cp" %}
+{% import '_includes/forms.twig' as forms %}
+
+{# Variables #}
+{% set selectedSubnavItem = 'settings' %}
+{% set fullPageForm = false %}
+
+{% block head %}
+    {{ parent() }}
+{% endblock %}
+
+{% block content %}
+    {{ parent() }}
+
+    <form method="post" action="{{ url('antispam/settings/save') }}">
+        {{ csrfInput() }}
+
+        <label>Allowed Countries (comma-separated):</label>
+
+        {{ forms.selectize({
+            label: 'Allowed Countries',
+            id: 'allowedCountries',
+            name: 'allowedCountries',
+            values: settings.allowedCountries,
+            multi: true,
+            options: countries
+        }) }}
+
+        {{ forms.lightswitchField({
+            label: 'Enable Logging'|t('yui'),
+            instructions: '',
+            id: 'enableLogging',
+            name: 'enableLogging',
+            on: settings.enableLogging,
+            errors: settings.getErrors('enableLogging'),
+            small: true,
+        }) }}
+
+        <hr>
+
+        {{ forms.lightswitchField({
+            label: 'Enable Phone validation'|t('yui'),
+            instructions: '',
+            id: 'enablePhoneValidation',
+            name: 'enablePhoneValidation',
+            on: settings.enablePhoneValidation,
+            errors: settings.getErrors('enablePhoneValidation'),
+            small: true,
+            toggle: '.phone-options'
+        }) }}
+
+        <div class="phone-options hidden">
+            {{ forms.textField({
+                first: false,
+                label: 'Phone field handle in the form'|t('yui'),
+                instructions: ''|t('yui'),
+                id: 'phoneFieldHandle',
+                name: 'phoneFieldHandle',
+                value: settings.phoneFieldHandle,
+                errors: settings.getErrors('phoneFieldHandle'),
+                suggestEnvVars: false,
+            }) }}
+
+            {{ forms.editableTable({
+                label: 'Phone Number Validation Patterns',
+                id: 'phoneRegexPatterns',
+                name: 'phoneRegexPatterns',
+                cols: {
+                    country: { heading: "Country Code", type: "singleline" },
+                    regex: { heading: "Regex Pattern", type: "singleline" },
+                },
+                rows: phoneRegexPatterns,
+                addRowLabel: "Add New Country Rule"
+            }) }}
+        </div>
+
+        <hr>
+
+        {{ forms.lightswitchField({
+            label: 'Enable Honeypot validation'|t('yui'),
+            instructions: '',
+            id: 'enableHoneypot',
+            name: 'enableHoneypot',
+            on: settings.enableHoneypot,
+            errors: settings.getErrors('enableHoneypot'),
+            small: true,
+            toggle: '.honeypot-options'
+        }) }}
+
+        <div class="honeypot-options hidden">
+            {{ forms.textField({
+                first: false,
+                label: 'Honeypot field handle in the form'|t('yui'),
+                instructions: ''|t('yui'),
+                id: 'honeypotFieldHandle',
+                name: 'honeypotFieldHandle',
+                value: settings.honeypotFieldHandle,
+                errors: settings.getErrors('honeypotFieldHandle'),
+                suggestEnvVars: false,
+            }) }}
+        </div>
+
+        <hr>
+
+        {{ forms.lightswitchField({
+            label: 'Enable IP Blocking'|t('yui'),
+            instructions: '',
+            id: 'enableIpBlocking',
+            name: 'enableIpBlocking',
+            on: settings.enableIpBlocking,
+            errors: settings.getErrors('enableIpBlocking'),
+            small: true,
+        }) }}
+
+        <hr>
+
+        {{ forms.lightswitchField({
+            label: 'Send Weekly Spam Report'|t('yui'),
+            instructions: '',
+            id: 'sendWeeklyReport',
+            name: 'sendWeeklyReport',
+            on: settings.sendWeeklyReport,
+            errors: settings.getErrors('sendWeeklyReport'),
+            small: true,
+        }) }}
+
+        <hr>
+
+        {{ forms.textField({
+            first: false,
+            label: 'Minimum Submission Time (seconds)'|t('yui'),
+            instructions: ''|t('yui'),
+            id: 'minSubmissionTime',
+            name: 'minSubmissionTime',
+            value: settings.minSubmissionTime,
+            errors: settings.getErrors('minSubmissionTime'),
+            suggestEnvVars: true,
+        }) }}
+
+        <button type="submit" class="btn primary submit">Save</button>
+    </form>
+{% endblock %}

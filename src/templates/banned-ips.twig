@@ -1,0 +1,43 @@
+{% extends "_layouts/cp" %}
+
+{% block content %}
+    <h1>Banned IPs</h1>
+
+    <form method="post" action="{{ url('antispam/banned-ips/ban-ip') }}">
+        {{ csrfInput() }}
+        <label>IP Address:</label>
+        <input type="text" name="ip" required>
+        <label>Reason:</label>
+        <input type="text" name="reason">
+        <button class="btn submit">Ban IP</button>
+    </form>
+
+    <hr>
+
+    <table class="data fullwidth">
+        <thead>
+        <tr>
+            <th>IP Address</th>
+            <th>Reason</th>
+            <th>Banned At</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for ip in bannedIps %}
+            <tr>
+                <td>{{ ip.ip_address }}</td>
+                <td>{{ ip.reason }}</td>
+                <td>{{ ip.banned_at|date("Y-m-d H:i:s") }}</td>
+                <td>
+                    <form method="post" action="{{ url('antispam/banned-ips/unban-ip') }}">
+                        {{ csrfInput() }}
+                        <input type="hidden" name="ip" value="{{ ip.ip_address }}">
+                        <button class="btn small">Unban</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

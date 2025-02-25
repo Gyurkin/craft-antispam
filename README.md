@@ -53,12 +53,12 @@ php craft clear-caches/all
 
 ### Allowed Countries
 
-Modify the allowed countries in the CP settings or manually update `config/project.php`:
+Modify the allowed countries in the CP settings or manually update `config/antispam.php`:
 
 ```php
 return [
     'antispam' => [
-        'allowedCountries' => ['SK', 'CZ', 'HU', 'DE'],
+        'allowedCountries' => ['SK', 'CZ', 'HU', 'DE', 'AT'],
     ],
 ];
 ```
