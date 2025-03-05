@@ -17,7 +17,7 @@ return [
     'Country not allowed: {country}.' => 'Ország nem megengedett: {country}.',
     'Invalid phone number: {phone}.' => 'Érvénytelen telefonszám: {phone}.',
     'Honeypot triggered with value: {honeypot}.' => 'A honeypot aktiválva lett a következő értékkel: {honeypot}.',
-    'Form submitted too quickly.' => 'A űrlapot túl gyorsan küldték be.',
+    'Form submitted too quickly: {time}.' => 'A űrlapot túl gyorsan küldték be: {time}.',
     'Anti-Spam' => 'Anti-spam',
     'Spam Logs' => 'Spam naplók',
     'Banned IPs' => 'Kitiltott IP-címek',
@@ -48,4 +48,8 @@ return [
     'Enter a comma-separated list of email addresses to receive the weekly spam report.' => 'Adjon meg egy vesszővel elválasztott listát az e-mail címekről, hogy megkapja a heti spam jelentést.',
     'Minimum Submission Time (seconds)' => 'Minimális beküldési idő (másodperc)',
     'Specify the minimum time a user must take to complete the form. This helps prevent rapid, automated submissions.' => 'Adja meg a minimális időt, amit a felhasználónak szánnia kell az űrlap kitöltésére. Ez segít megelőzni a gyors, automatizált beküldéseket.',
+
+    // 06/03/2025
+    'Auto IP Blocking' => 'Automatikus IP-blokkolás',
+    'Enable this setting to automatically block IP addresses flagged as suspicious or blacklisted.' => 'Ezzel a beállítással automatikusan letilthatók a gyanúsnak vagy feketelistára került IP-címek.',
 ];

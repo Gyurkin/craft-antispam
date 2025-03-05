@@ -17,7 +17,7 @@ return [
     'Country not allowed: {country}.' => 'Země není povolena: {country}.',
     'Invalid phone number: {phone}.' => 'Neplatné telefonní číslo: {phone}.',
     'Honeypot triggered with value: {honeypot}.' => 'Honeypot spuštěn s hodnotou: {honeypot}.',
-    'Form submitted too quickly.' => 'Formulář byl odeslán příliš rychle.',
+    'Form submitted too quickly: {time}.' => 'Formulář byl odeslán příliš rychle: {time}.',
     'Anti-Spam' => 'Anti-spam',
     'Spam Logs' => 'Záznamy spamu',
     'Banned IPs' => 'Zablokované IP adresy',
@@ -48,4 +48,8 @@ return [
     'Enter a comma-separated list of email addresses to receive the weekly spam report.' => 'Zadejte seznam e-mailových adres oddělených čárkou pro příjem týdenní zprávy o spamu.',
     'Minimum Submission Time (seconds)' => 'Minimální čas odeslání (sekundy)',
     'Specify the minimum time a user must take to complete the form. This helps prevent rapid, automated submissions.' => 'Uveďte minimální čas, který musí uživatel strávit vyplňováním formuláře. To pomáhá předcházet rychlým, automatizovaným odesláním.',
+
+    // 06/03/2025
+    'Auto IP Blocking' => 'Automatické blokování IP',
+    'Enable this setting to automatically block IP addresses flagged as suspicious or blacklisted.' => 'Povolením tohoto nastavení se automaticky zablokují IP adresy označené jako podezřelé nebo na černé listině.',
 ];

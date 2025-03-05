@@ -18,7 +18,7 @@ return [
     'Country not allowed: {country}.' => 'Country not allowed: {country}.',
     'Invalid phone number: {phone}.' => 'Invalid phone number: {phone}.',
     'Honeypot triggered with value: {honeypot}.' => 'Honeypot triggered with value: {honeypot}.',
-    'Form submitted too quickly.' => 'Form submitted too quickly.',
+    'Form submitted too quickly: {time}.' => 'Form submitted too quickly: {time}.',
     'Anti-Spam' => 'Anti-Spam',
     'Spam Logs' => 'Spam Logs',
     'Banned IPs' => 'Banned IPs',
@@ -49,4 +49,8 @@ return [
     'Enter a comma-separated list of email addresses to receive the weekly spam report.' => 'Enter a comma-separated list of email addresses to receive the weekly spam report.',
     'Minimum Submission Time (seconds)' => 'Minimum Submission Time (seconds)',
     'Specify the minimum time a user must take to complete the form. This helps prevent rapid, automated submissions.' => 'Specify the minimum time a user must take to complete the form. This helps prevent rapid, automated submissions.',
+
+    // 06/03/2025
+    'Auto IP Blocking' => 'Auto IP Blocking',
+    'Enable this setting to automatically block IP addresses flagged as suspicious or blacklisted.' => 'Enable this setting to automatically block IP addresses flagged as suspicious or blacklisted.',
 ];

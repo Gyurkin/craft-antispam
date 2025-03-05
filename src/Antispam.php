@@ -14,6 +14,7 @@ use craft\web\View;
 use craft\events\RegisterTemplateRootsEvent;
 use modules\antispam\src\models\Settings;
 use craft\i18n\PhpMessageSource;
+use yii\base\UserException;
 
 /**
  * Class Antispam
@@ -25,7 +26,12 @@ class Antispam extends BaseModule
     /**
      * @var array
      */
-    private static $geoData = [];
+    private static array $geoData = [];
+
+    /**
+     * @var float|int
+     */
+    private static float|int $submitTime = 0;
 
     /**
      * @return void
@@ -83,12 +89,11 @@ class Antispam extends BaseModule
             Mailer::class,
             Mailer::EVENT_BEFORE_SEND,
             static function (SendEvent $event) {
-                $settings = self::getSettings();
-
                 if ($event->isSpam) {
                     return;
                 }
 
+                $settings = self::getSettings();
                 $request = Craft::$app->getRequest();
                 $ip = $request->getUserIP();
                 $allowedCountries = self::getAllowedCountries();
@@ -115,7 +120,7 @@ class Antispam extends BaseModule
 
                 // 3. Validate phone number
                 $phoneHandle = $settings->phoneFieldHandle;
-                if ($settings->enablePhoneValidation && $phoneHandle) {
+                if ($settings->enablePhoneValidation && $phoneHandle && isset($event->submission->message[$phoneHandle])) {
                     $geoData = self::getGeoLocation($ip);
                     if ($geoData && !self::validatePhone($event->submission->message[$phoneHandle] ?? '', strtoupper($geoData['countryCode']))) {
                         self::logSpam($ip, Craft::t('antispam', 'Invalid phone number: {phone}.', ['phone' => $event->submission->message[$phoneHandle]]));
@@ -139,10 +144,88 @@ class Antispam extends BaseModule
                 // 5. Check submission time
                 if ($settings->enableSubmissionTimeCheck) {
                     if (!self::validateSubmissionTime()) {
-                        self::logSpam($ip, Craft::t('antispam', 'Form submitted too quickly.'));
+                        self::logSpam($ip, Craft::t('antispam', 'Form submitted too quickly: {time}s.', [
+                            'time' => self::$submitTime
+                        ]));
                         $event->isSpam = true;
                         $event->handled = true;
                         return;
+                    }
+                }
+            }
+        );
+
+        Event::on(
+            \craft\services\Elements::class,
+            \craft\services\Elements::EVENT_BEFORE_SAVE_ELEMENT,
+            static function(\craft\events\ElementEvent $event) {
+                $element = $event->element;
+
+                // Craft Contact Form Extensions
+                if ($element instanceof \hybridinteractive\contactformextensions\elements\ContactFormSubmission || $element instanceof  \hybridinteractive\contactformextensions\elements\Submission) {
+                    $settings = self::getSettings();
+                    $request = Craft::$app->getRequest();
+                    $ip = $request->getUserIP();
+                    $allowedCountries = self::getAllowedCountries();
+                    $data = json_decode($element->message, true, 512, JSON_THROW_ON_ERROR) ?? [];
+
+                    // 1. Check if IP is banned
+                    if ($settings->enableIpBlocking) {
+                        if (self::isBannedIp($ip)) {
+                            // Prevent the save operation by marking the event as invalid.
+                            $event->isValid = false;
+                        }
+                    }
+
+                    // 2. Get user location and validate country
+                    if ($settings->enableGeoValidation) {
+                        $geoData = self::getGeoLocation($ip);
+                        if ($geoData && !in_array(strtoupper($geoData['countryCode']), $allowedCountries)) {
+                            self::logSpam($ip, Craft::t('antispam', 'Country not allowed: {country}.', ['country' => $geoData['countryCode']]));
+                            // Prevent the save operation by marking the event as invalid.
+                            $event->isValid = false;
+                        }
+                    }
+
+                    // 3. Validate phone number
+                    $phoneHandle = $settings->phoneFieldHandle;
+                    if ($settings->enablePhoneValidation && $phoneHandle && isset($data[$phoneHandle])) {
+                        $geoData = self::getGeoLocation($ip);
+                        if ($geoData && !self::validatePhone($data[$phoneHandle], strtoupper($geoData['countryCode']))) {
+                            self::logSpam($ip, Craft::t('antispam', 'Invalid phone number: {phone}.', ['phone' => $data[$phoneHandle]]));
+                            // Prevent the save operation by marking the event as invalid.
+                            $event->isValid = false;
+                        }
+                    }
+
+                    // 4. Check honeypot field
+                    $honeypotHandle = $settings->honeypotFieldHandle;
+                    if ($settings->enableHoneypot && $honeypotHandle) {
+                        if (!empty($data[$honeypotHandle])) {
+                            self::logSpam($ip, Craft::t('antispam', 'Honeypot triggered with value: {honeypot}.', ['honeypot' => $data[$honeypotHandle]]));
+                            // Prevent the save operation by marking the event as invalid.
+                            $event->isValid = false;
+                        }
+                    }
+
+                    // 5. Check submission time
+                    if ($settings->enableSubmissionTimeCheck) {
+                        if (!self::validateSubmissionTime()) {
+                            $humanTime = Craft::$app->formatter->asDuration(self::$submitTime);
+                            self::logSpam($ip, Craft::t('antispam', 'Form submitted too quickly: {time}.', [
+                                'time' => $humanTime
+                            ]));
+                            // Prevent the save operation by marking the event as invalid.
+                            $event->isValid = false;
+                        }
+                    }
+
+                    if (!$event->isValid) {
+                        $element->addError('base', 'Submission prevented due to spam check.');
+
+                        // Throw an exception to halt the process
+                        // No other solution stopped the element saving into the DB
+                        throw new UserException('Submission prevented due to spam check.');
                     }
                 }
             }
@@ -213,37 +296,46 @@ class Antispam extends BaseModule
     }
 
     /**
+     * Formats phone numbers correctly by adding the country prefix if missing.
+     *
+     *  Works with the following input formats:
+     *  - 00421904430072  → +421904430072
+     *  - 421904430072    → +421904430072
+     *  - 0904430072      → +421904430072
+     *  - 00904430072     → +421904430072
+     *  - +421904430072   → +421904430072
+     *  - 904430072       → +421904430072
+     *  - 4210904430072   → +421904430072
+     *  - 421 904 4300 72 → +421904430072
+     *  - 0421904430072   → +421904430072
+     *
      * @param $phone
-     * @param $countryCode
+     * @param string|null $countryCode
      * @return string
      */
-    private static function normalizePhone($phone, $countryCode): string
+    private static function normalizePhone($phone, ?string $countryCode): string
     {
-        // Remove all non-numeric characters except leading '+'
-        $phone = preg_replace('/[^\d+]/', '', $phone);
-        $prefix = self::getPrefixByCountry($countryCode);
-
-        // If number starts with '00', convert to '+'
-        if (str_starts_with($phone, '00')) {
-            $phone = '+' . substr($phone, 2);
+        if (!$countryCode) {
+            return $phone;
         }
 
-        // If number starts with a single '0', replace with the country prefix
-        elseif (str_starts_with($phone, '0')) {
-            $phone = '+' . $prefix . substr($phone, 1);
+        // Remove all spaces
+        $phone = str_replace(' ', '', $phone);
+
+        // Get country prefix (e.g., 421 for Slovakia)
+        $phonePrefix = self::getPrefixByCountry(strtoupper($countryCode));
+
+        // Remove leading 00, +, or country prefix if present
+        $phone = preg_replace('/^(00|\+)?' . $phonePrefix . '/', '', $phone);
+
+        // Ensure the phone number starts with a leading zero
+        if (substr($phone, 0, 1) !== '0') {
+            $phone = '0' . $phone;
         }
 
-        // If number starts with '+', check if the country prefix is missing
-        elseif (str_starts_with($phone, '+')) {
-            if (!str_starts_with($phone, '+' . $prefix)) {
-                // If it starts with '+', but the wrong prefix, assume it's an incorrect entry and replace the prefix
-                $phone = '+' . $prefix . substr($phone, 1);
-            }
-        }
-
-        // If no country prefix and doesn't start with '+', assume it's missing and prepend it
-        elseif (!str_starts_with($phone, '+')) {
-            $phone = '+' . $prefix . $phone;
+        // Convert leading zero to country code
+        if ($phonePrefix) {
+            $phone = preg_replace('/^0/', '+' . $phonePrefix, $phone);
         }
 
         return $phone;
@@ -258,7 +350,10 @@ class Antispam extends BaseModule
         $startTime = $session->get('formStartTime');
         $session->set('formStartTime', time());
 
-        return $startTime && (time() - $startTime > 3); // Block if under 3 sec
+        // Save for logs
+        self::$submitTime = time() - $startTime;
+
+        return $startTime && (self::$submitTime > 3); // Block if under 3 sec
     }
 
     /**
@@ -269,6 +364,11 @@ class Antispam extends BaseModule
     private static function logSpam($ip, $reason): void
     {
         $settings = self::getSettings();
+
+        // Auto ban IP
+        if ($settings->autoIpBlocking) {
+            self::banIp($ip, $reason);
+        }
 
         // Skip if disabled
         if (!$settings->enableLogging) {

@@ -132,6 +132,16 @@
         small: true,
     }) }}
 
+    {{ forms.lightswitchField({
+        label: 'Auto IP Blocking'|t('antispam'),
+        instructions: 'Enable this setting to automatically block IP addresses flagged as suspicious or blacklisted.'|t('antispam'),
+        id: 'autoIpBlocking',
+        name: 'autoIpBlocking',
+        on: settings.autoIpBlocking,
+        errors: settings.getErrors('autoIpBlocking'),
+        small: true,
+    }) }}
+
     <hr>
 
     {{ forms.lightswitchField({

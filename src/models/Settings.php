@@ -62,6 +62,11 @@ class Settings extends Model
     public ?string $weeklyReportEmails = null;
 
     /**
+     * @var bool
+     */
+    public bool $autoIpBlocking = false;
+
+    /**
      * @var array|string[]
      */
     public array $phoneRegexPatterns = [

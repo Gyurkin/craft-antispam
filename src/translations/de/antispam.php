@@ -17,7 +17,7 @@ return [
     'Country not allowed: {country}.' => 'Land nicht erlaubt: {country}.',
     'Invalid phone number: {phone}.' => 'Ungültige Telefonnummer: {phone}.',
     'Honeypot triggered with value: {honeypot}.' => 'Honeypot ausgelöst mit Wert: {honeypot}.',
-    'Form submitted too quickly.' => 'Formular wurde zu schnell übermittelt.',
+    'Form submitted too quickly: {time}.' => 'Formular wurde zu schnell übermittelt: {time}.',
     'Anti-Spam' => 'Anti-Spam',
     'Spam Logs' => 'Spam-Protokolle',
     'Banned IPs' => 'Gesperrte IP-Adressen',
@@ -48,4 +48,8 @@ return [
     'Enter a comma-separated list of email addresses to receive the weekly spam report.' => 'Geben Sie eine durch Kommas getrennte Liste von E-Mail-Adressen ein, um den wöchentlichen Spam-Bericht zu erhalten.',
     'Minimum Submission Time (seconds)' => 'Minimale Übermittlungszeit (Sekunden)',
     'Specify the minimum time a user must take to complete the form. This helps prevent rapid, automated submissions.' => 'Geben Sie die Mindestzeit an, die ein Benutzer zum Ausfüllen des Formulars benötigt. Dies hilft, schnelle, automatisierte Übermittlungen zu verhindern.',
+
+    // 06/03/2025
+    'Auto IP Blocking' => 'Automatische IP-Sperrung',
+    'Enable this setting to automatically block IP addresses flagged as suspicious or blacklisted.' => 'Aktivieren Sie diese Einstellung, um IP-Adressen, die als verdächtig oder auf der schwarzen Liste stehen, automatisch zu blockieren.',
 ];
