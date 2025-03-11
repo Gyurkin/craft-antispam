@@ -14,7 +14,7 @@ class Settings extends Model
     /**
      * @var bool
      */
-    public bool $enableLogging = false;
+    public bool $enableLogging = true;
     /**
      * @var array|string[]
      */
@@ -26,11 +26,11 @@ class Settings extends Model
     /**
      * @var bool
      */
-    public bool $enablePhoneValidation = true;
+    public bool $enablePhoneValidation = false;
     /**
      * @var bool
      */
-    public bool $enableHoneypot = true;
+    public bool $enableHoneypot = false;
     /**
      * @var bool
      */
@@ -42,7 +42,7 @@ class Settings extends Model
     /**
      * @var bool
      */
-    public bool $sendWeeklyReport = true;
+    public bool $sendWeeklyReport = false;
     /**
      * @var string
      */
