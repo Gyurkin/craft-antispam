@@ -18,7 +18,7 @@ class Settings extends Model
     /**
      * @var array|string[]
      */
-    public array $allowedCountries = ['SK', 'CZ', 'HU', 'DE'];
+    public array $allowedCountries = ['SK', 'CZ', 'HU', 'DE', 'AT'];
     /**
      * @var bool
      */
