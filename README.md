@@ -31,19 +31,31 @@ return [
 ];
 ```
 
-3. Run the database migrations:
+3. Make sure the modules directory is autoloaded in `composer.json`:
+
+```json
+{
+  "autoload": {
+    "psr-4": {
+      "modules\\": "modules/"
+    }
+  },
+}
+```
+
+4. Run the database migrations:
 
 ```shell
 php craft migrate/up
 ```
 
-4. Clear caches:
+5. Clear caches:
 
 ```shell
 php craft clear-caches/all
 ```
 
-5. Visit the Craft CMS Control Panel (`/admin`) and navigate to:
+6. Visit the Craft CMS Control Panel (`/admin`) and navigate to:
 
 - **Anti-Spam Logs** → View blocked attempts.
 - **Banned IPs** → Manually ban/unban IPs.
@@ -119,4 +131,5 @@ For issues, please open a ticket in the repository.
 ## 👨‍💻 Author
 
 Crafted with ❤️ by [Juraj Nagy / YUI s.r.o.]
+
 For questions, contact: [juraj@yui.sk]
